@@ -1,0 +1,37 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+ name: ingress-test-vs
+spec:
+ gateways:
+ - knative-serving/cluster-local-gateway
+ - knative-serving/knative-ingress-gateway
+ hosts:
+ - ingress-server-check.default.test.kuberun.com
+ - vs-host.kuberun.com
+ http:
+ - match:
+   - uri:
+       prefix: "/"
+     gateways:
+     - knative-serving/knative-ingress-gateway
+   rewrite:
+     authority: ingress-server-check.default.test.kuberun.com
+
+   retries:
+     attempts: 3
+     perTryTimeout: 10m0s
+   route:
+   - destination:
+       host: istio-ingressgateway.istio-system.svc.cluster.local
+       port:
+         number: 80
+     # headers:
+     #   request:
+     #     add:
+     #       X-Host: vs-host.kuberun.com
+     #       X-Knative-Serving-Namespace: default
+     #       X-Knative-Serving-Revision: ingress-server-check-qcjk9
+     weight: 100
+   timeout: 10m0s
+   websocketUpgrade: true
